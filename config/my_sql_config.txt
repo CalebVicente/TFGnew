@@ -1,0 +1,6 @@
+root_password: tfg_project
+TCP port: 3306
+
+database: news_storage
+	  tables:
+		tv_storage

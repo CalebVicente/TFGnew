@@ -19,17 +19,17 @@ from modules.lda.unsupervised_learning_gensim import printColorWordDocument
 #end my modules importation ------------------------------
 """IN THIS CODE WE WILL EXECUTE THE CODE RELATED TO LDA"""
 
-start_topics = 38
-N_TOPICS =40
+start_topics = 20
+N_TOPICS =25
 
 #este parámetro no se puede añadir a mano
 n_printedDocuments =2
-max_clusters=100
+max_clusters= 100
 
 [files, max_documents] = g.get_NameFiles()
 
 #if we want to change the number of documents to analized we can do it here
-n_documents=max_documents-4
+n_documents=500
 
 #PROGRAM-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
