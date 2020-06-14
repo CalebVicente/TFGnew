@@ -13,6 +13,25 @@ import configparser
 config = configparser.ConfigParser()
 config.read('config\\config.ini')
 
+def pca_doc2vec(arr_vec_doc2vec):
+    """this function it is used for applying PCA to the algorithm and get most important dimensions.
+    PCA is used in this case to probe the k_means algorithm faster"""
+    
+    from sklearn.decomposition import PCA
+    from sklearn.preprocessing import StandardScaler
+    #my_module---------------------------------------------------------
+    from modules.classificator import k_means_doc2vec as k
+    
+    arr_vec_doc2vec_norm = StandardScaler().fit_transform(arr_vec_doc2vec)
+    pca = PCA(n_components=np.shape(arr_vec_doc2vec)[1])
+    #new vector of characteristics for document
+    components = pca.fit_transform(arr_vec_doc2vec_norm )
+    
+    #importants dimensions
+    vr = pca.explained_variance_ratio_
+    knee = k.knee_locator_k_means(vr, curve='convex', direction='decreasing')
+    
+    return components, vr, knee
 
 def validator_cluster(array_vector_doc2vec, max_cluster, min_cluster=1):
 	"""This function is going to take the percentaje of the topic of every document, and will validate what number of
@@ -29,13 +48,13 @@ def validator_cluster(array_vector_doc2vec, max_cluster, min_cluster=1):
 	
 	return score
 
-def knee_locator_k_means(score):
+def knee_locator_k_means(score, curve='concave', direction='increasing'):
 	"""This funtion localize where is the optimal number of clusters"""
 	from kneed import KneeLocator
 
 	x = range(1, len(score)+1)
 	#son super importantes las variables curve y direction o el KneeLocator no funcionará correctaente
-	kn = KneeLocator(x, score, curve='concave', direction='increasing')
+	kn = KneeLocator(x, score, curve=curve, direction=direction)
 	
 	return kn.knee
 

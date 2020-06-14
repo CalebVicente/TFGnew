@@ -7,6 +7,48 @@ Created on Wed May 27 17:38:18 2020
 
 """IN THIS PROGRAM THE CODE DOC2VEC WILL BE EXECUTED """
 
-from modules.doc2vec.doc2vec import doc2vec_module
+from modules.doc2vec import doc2vec as d2v
+from modules.classificator import k_means_doc2vec as k
+import matplotlib.pyplot as plt
+import timeit
 
-doc2vec_module(n_documents = 50, max_clusters = 20)
+max_clusters=300
+
+[list_vec_doc2vec, arr_vec_doc2vec]=d2v.doc2vec_module(n_documents = 5000, max_clusters = max_clusters)
+
+#-----------------------------------------------------------------------------------------------------
+#COMPARATION BETWEEN K_MEANS AND PCA KMEANS
+#-----------------------------------------------------------------------------------------------------
+plt.figure(0)
+tic=timeit.default_timer()
+knee_c=d2v.doc2vec_kmeans_similarity(arr_vec_doc2vec, max_clusters)
+toc=timeit.default_timer()
+print("Time using normal k_means: "+str(toc-tic))
+plt.figure(1)
+tic=timeit.default_timer()
+[components,knee_pca]=d2v.doc2vec_kmeans_pca(arr_vec_doc2vec, max_clusters)
+toc=timeit.default_timer()
+print("Time using PCA k_means: "+str(toc-tic))
+
+#START PCA: ------------------------------------------------------------------------------------------
+
+
+
+
+"""
+plt.figure(3)
+plt.scatter(components[:, 2], components[:, 1], c=prediction, s=50, cmap='viridis')
+
+centers = kmeans.cluster_centers_
+plt.scatter(centers[:, 2], centers[:, 1], c='black', s=200, alpha=0.5);
+
+
+score_completed=validator_cluster(arr_vec_doc2vec,100)
+knee2 = k.knee_locator_k_means(score_completed)
+plt.figure(4)
+k.graphic_k_means_validator(knee2,score_completed)
+"""
+
+
+
+#FINISHED PCA: -------------------------------------------------------------------------

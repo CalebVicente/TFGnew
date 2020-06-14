@@ -1,0 +1,55 @@
+{
+    "province": "A CORUÑA",
+    "date": "2005-09-13T00:00:00",
+    "url": "https://www.20minutos.es/noticia/46630/0/Vuelve/el/marisqueo/",
+    "title": {
+        "raw_text": "Vuelve el marisqueo a O Burgo porque ya no hay toxinas diarreicas",
+        "lemmatized_text": "volver el marisqueo a o_burgo porque ya no haber toxina diarreico",
+        "lemmatized_text_reduced": "volver marisqueo o_burgo haber toxina diarreico",
+        "persons": [
+            "O_Burgo"
+        ],
+        "locations": [],
+        "organizations": [],
+        "others": [],
+        "dates": [],
+        "numbers": []
+    },
+    "lead": {
+        "raw_text": "Veinticinco mariscadoras volverán a faenar hoy en la ría de O Burgo después de que un informe de la Consellería de Pesca de la Xunta confirmase la desaparición de la toxina diarreica, que provoca náuseas, vómitos y diarrea en los consumidores de alimentos infectados.",
+        "lemmatized_text": "25 mariscador volver a faenar hoy en el ría de o_burgo después_de que uno informe de el consellería_de_pesca_de_la_xunta confirmar el desaparición de el toxina diarreico que provocar náusea vómito y diarrea en el consumidor de alimento infectar",
+        "lemmatized_text_reduced": "mariscador volver faenar ría o_burgo informe consellería_de_pesca_de_la_xunta confirmar desaparición toxina diarreico provocar náusea vómito diarrea consumidor alimento infectar",
+        "persons": [],
+        "locations": [
+            "O_Burgo"
+        ],
+        "organizations": [
+            "Consellería_de_Pesca_de_la_Xunta"
+        ],
+        "others": [],
+        "dates": [],
+        "numbers": [
+            "25"
+        ]
+    },
+    "body": {
+        "raw_text": "Este contratiempo obligó a vedar el marisqueo desde el pasado miércoles, lo que ha provocado una pérdida de capturas de dos toneladas. Fina Díaz, patrona mayor en funciones de la Cofradía de Pescadores de A Coruña, afirma que las capturas de mañana se pueden acercar a los 375 kilos. Las especies afectadas eran berberechos y almejas.",
+        "lemmatized_text": "este contratiempo obligar a vedar el marisqueo desde el [X:??/??/??:??.??:??] el que haber provocar uno pérdida de captura de 2 tonelada fina_díaz patrón mayor en función de el cofradía_de_pescadores_de_a_coruña afirmar que el captura de mañana se poder acercar a el 375 kilo el especie afectar ser berberecho y almeja",
+        "lemmatized_text_reduced": "contratiempo obligar vedar marisqueo haber provocar pérdida captura tonelada fina_díaz patrón mayor función cofradía_de_pescadores_de_a_coruña afirmar captura mañana poder acercar kilo especie afectar ser berberecho almeja",
+        "persons": [
+            "Fina_Díaz"
+        ],
+        "locations": [],
+        "organizations": [
+            "Cofradía_de_Pescadores_de_A_Coruña"
+        ],
+        "others": [],
+        "dates": [
+            "[X:??/??/??:??.??:??]"
+        ],
+        "numbers": [
+            "2",
+            "375"
+        ]
+    }
+}

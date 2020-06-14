@@ -32,9 +32,12 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
+import ast
 #started importation my own modules---------------------------------
 from modules.pre.create_corpus import create_corpus
 from modules.pre.create_corpus import normalize_word
+from modules.sql import dBAdapter
+
 #finised importation my own modules---------------------------------
 
 
@@ -67,18 +70,21 @@ def printColorWordDocument(number,colors,generator_normalize,dic_subtitles,lda_m
     document_classified=[]
     word_dominanttopic_dict=dict(word_dominanttopic)
     dict_one_subtitle_token=word_tokenize(dic_subtitles[list(dic_subtitles.keys())[number]])
-    for word in dict_one_subtitle_token:
+    for word in tqdm(dict_one_subtitle_token):
         topic_word=len(colors)-1
-        if normalize_word(word) in generator_normalize[number]:
-            try:
-                topic_word=word_dominanttopic_dict[normalize_word(word)]
-            except KeyError as error:
-                # Escribir aquí un log en vez de un print
-                logging.warning("OSError --- key error: "+str(word))
-                
-        else:
-            topic_word=len(colors)-1
-        document_classified.append((word,topic_word))
+        try:
+            if normalize_word(word) in generator_normalize[number]:
+                try:
+                    topic_word=word_dominanttopic_dict[normalize_word(word)]
+                except KeyError as error:
+                    # Escribir aquí un log en vez de un print
+                    logging.warning("OSError --- key error: "+str(word))
+                    
+            else:
+                topic_word=len(colors)-1
+            document_classified.append((word,topic_word))
+        except:
+            print("errrror")
     
     
     #document_classified=[(word,word_dominanttopic_dict[word]) for word in generator_normalize[0]]
@@ -124,23 +130,48 @@ def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):
     #Tengo que escribir para que sirve cada cosa que hace el gensim
     coherencemodelArray=[]
     
+    #import from DDBB dic_subtitles and generator normalize--------------------
+    """
+    print("Getting body subtitles from the database started ...")
+    dbAdapter= dBAdapter.Database()
+    dbAdapter.open()
+    dic_subtitles = dict(dbAdapter.selectDic_subtitles_limit(n_documents))
+    gn = dbAdapter.selectGenerator_normalize_limit(n_documents)
+    generator_normalize = [ast.literal_eval(gni[0]) for gni in gn]
+    dbAdapter.close()
+    print("Getting body subtitles from the database finished ...")
+    """
+    print("Getting body subtitles from the database started ...")
+    dbAdapter= dBAdapter.Database()
+    dbAdapter.open()
+    listado=dbAdapter.selectGenerator_normalize_limit(n_documents)
+    dic_subtitles = dict(dbAdapter.selectDic_subtitles_limit(n_documents))
+    dbAdapter.close()
+    print("finalizada consulta")
+    
+    generator_normalize = []
+    for l in listado:
+        generator_normalize.append(l[0].split(","))
+    for gn in generator_normalize:
+        while True:
+            try:
+                gn.remove("")
+            except ValueError:
+                break
+    print("Getting body subtitles from the database finished ...")
+    #--------------------------------------------------------------------------
+    
     if not os.path.exists('pickle\\'+str(n_documents)):
         os.makedirs('pickle\\'+str(n_documents))
     try: 
-        generator_normalize = pickle.load(open("pickle\\"+str(n_documents)+"\generator_normalize_"+str(n_documents)+".txt", "rb"))
-        dic_subtitles = pickle.load(open("pickle\\"+str(n_documents)+"\dic_subtitles_"+str(n_documents)+".pickle", "rb"))
-        #[generator_normalize, dic_subtitles]=create_corpus(n_documents)
+        
         id2word = pickle.load(open("pickle\\"+str(n_documents)+"\id2word_"+str(n_documents)+".txt", "rb"))
         corpus = pickle.load(open("pickle\\"+str(n_documents)+"\corpus_"+str(n_documents)+".txt", "rb"))
         print("generator_normalize, id2word and corpus has been imported")
+    
     except IOError:
-        print(" the corpus with: "+str(n_topics)+" is being created...")
-        [generator_normalize, dic_subtitles]=create_corpus(n_documents)
-        file_generator_normalize = "pickle\\"+str(n_documents)+"\generator_normalize_"+str(n_documents)+'.txt'
-        pickle.dump(generator_normalize, open(file_generator_normalize, 'wb'))
         
-        file_dic_subtitles = "pickle\\"+str(n_documents)+"\dic_subtitles_"+str(n_documents)+'.pickle'
-        pickle.dump(dic_subtitles, open(file_dic_subtitles, 'wb'))
+        print("Proccess of creating corpus and the dictionary has started")
         #this is creating a dictionary with all de different words of the document
         id2word = corpora.Dictionary(generator_normalize)
         file_id2word = "pickle\\"+str(n_documents)+"\id2word_"+str(n_documents)+'.txt'
@@ -150,7 +181,7 @@ def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):
         file_corpus = "pickle\\"+str(n_documents)+"\corpus_"+str(n_documents)+'.txt'
         pickle.dump(corpus, open(file_corpus, 'wb'))
         
-        print("Proccess of creating corpus has ended")
+        print("Proccess of creating corpus and the dictionary has ended")
     
     for n_topics in range(start, n_topics, step):
         file_lda_model = 'pickle\\'+str(n_documents)+'\lda_model_'+str(n_topics)+'_'+str(n_documents)+'.sav'

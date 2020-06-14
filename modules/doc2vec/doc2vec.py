@@ -14,6 +14,10 @@ import numpy as np
 from sklearn.cluster import KMeans
 import os
 import configparser
+import ast
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
 
 #start my importations------------------------
 """
@@ -22,15 +26,18 @@ sys.path.insert(0,'..')
 """
 from modules.pre import create_corpus as c
 from modules.classificator import k_means_doc2vec as km_d2v
+from modules.pre import get_data as g
+from modules.sql import dBAdapter
 #end my importations--------------------------
+config = configparser.ConfigParser()
+config.read('config\\config.ini')
 
 
 #start config variables---------------------------------------------------------------------
 
 def doc2vec_module(n_documents = 500, max_clusters = 200):
     
-    config = configparser.ConfigParser()
-    config.read('config\\config.ini')
+    
     
     #logs
     file_logs = config['LOGS']['doc2vec_logs']
@@ -41,14 +48,27 @@ def doc2vec_module(n_documents = 500, max_clusters = 200):
     #end config variables-----------------------------------------------------------------------
         
     
-    # Download dataset
-    #------------------------------------------------------------------------------------------
-    
-    [dic_subtitles,data]=c.create_d2v_corpus(n_documents)
-    
+    #import from DDBB dic_subtitles and data doc2vec --------------------------
+    print("Getting body subtitles from the database started ...")
+    data=[]
+    dbAdapter= dBAdapter.Database()
+    dbAdapter.open()
+    dic_subtitles = dict(dbAdapter.selectDic_subtitles_limit(n_documents))
     subtitles=list(dic_subtitles.keys())
+    list_s=dbAdapter.select_dataDoc2Vec(n_documents)
+    print("Getting body subtitles from the database finished ...")
+    data=[]
+    for l in list_s:
+        data.append(l[0].split(","))
+    for d in data:
+        while True:
+            try:
+                d.remove("")
+            except ValueError:
+                break
     
-    #------------------------------------------------------------------------------------------
+    
+    #--------------------------------------------------------------------------
     
     # Create the tagged document needed for Doc2Vec
     def create_tagged_document(list_of_list_of_words):
@@ -71,24 +91,50 @@ def doc2vec_module(n_documents = 500, max_clusters = 200):
     arr_vec_doc2vec = np.stack( list_vec_doc2vec, axis=0 )
     
     
-    
+    return list_vec_doc2vec, arr_vec_doc2vec
+
+def doc2vec_kmeans_similarity(arr_vec_doc2vec, max_clusters):
     #K_MEANS SIMILARITY: -------------------------------------------------------------------------
-    
+    knee=0
     try:
         score = km_d2v.validator_cluster(arr_vec_doc2vec, max_clusters ,min_cluster=1)
         try:
             knee = km_d2v.knee_locator_k_means(score)
+            #plt.figure(1)
             km_d2v.graphic_k_means_validator(knee,score)
         except:
             logging.warning("Kmeans doc2vec error score has not been fill completely.")
     except ValueError:
         
-        logging.warning("Value error: n_clusters should be less than documents we are using")
-        
+        logging.warning("Value error: n_clusters should be less than documents we are using")   
+    
+    return knee
         
     #k_means_optimized = KMeans(n_clusters=knee).fit(arr_vec_doc2vec)
-            
+
+def doc2vec_kmeans_pca(arr_vec_doc2vec, max_clusters):  
+    #K_MEANS PCA: -------------------------------------------------------------------------
+    #k_means with PCA
+    [components, vr, knee] = km_d2v.pca_doc2vec(arr_vec_doc2vec)
+    plt.figure(1)
+    km_d2v.graphic_k_means_validator(knee,vr)
+    
+    score=km_d2v.validator_cluster(components[:,0:knee],max_clusters)
+    knee = km_d2v.knee_locator_k_means(score)
+    plt.figure(2)
+    km_d2v.graphic_k_means_validator(knee,score)
+    
+    """
+    kmeans = KMeans(n_clusters=knee)
+    kmeans.fit(components[:,0:knee])
+    prediction = kmeans.predict(components[:,0:3])
+    """
+    
+    return components, knee
+    
+def d2v_kmeans2excel(arr_vec_doc2vec, dic_subtitles,n_documents,knee):
     #RESULTS K_MEANS DOC2VEC TO EXCEL---------------------------------------------------------------
+    subtitles = list(dic_subtitles.keys())
     k_means_optimized = KMeans(n_clusters=knee).fit(arr_vec_doc2vec)
     
     index_clusters = km_d2v.similar_subtitles(dic_subtitles,k_means_optimized,knee, k_means_optimized)
@@ -106,6 +152,6 @@ def doc2vec_module(n_documents = 500, max_clusters = 200):
             os.makedirs(path_days+str(n_documents))
     with pd.ExcelWriter(path_days+str(n_documents)+'\\day_clusters'+str(n_documents)+'.xlsx') as writer:
             df.to_excel(writer, sheet_name="main") 
-    for day in tqdm(days[0:200]):
+    for day in tqdm(days[0:10]):
         km_d2v.printDayDf(day, vec_dataframe, n_documents, index_clusters, subtitles,k_means_optimized, knee)
 

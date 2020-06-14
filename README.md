@@ -4,21 +4,22 @@
 
 --------------------------------------------------------------------------------------------------
 
-VERSION: 27052020
-COMMIT: “modules lda and doc2vec working”
+VERSION: 14062020
+COMMIT: “msql_complete
 
 
-Cambios implementados en esta versión
+Cambios principales implementados en esta versión
 
-* Implementación de los sistemas doc2vec y lda en modulos que se ejecutarán desde los scripts execute
-* Ordenación de la carpeta results
-* Creación del k_means de los resultados doc2vec así como la impresión de los mismos en archivos Excel
-* Implementación de un archivo config encargado de las rutas de todo el programa
-* Función normalize_text y normalize_word dentro de créate_corpus funcionando correctamente tanto las siglas como la unión de nombres compuestos y no lemmatizar nombres de personas
+* Implementación de la base de datos, consultas e inserciones dentro de la misma
+* Mejora de errores en la creación del corpus, como la no adición de algunas palabras como artículos, si estos están en mayúscula, etc. Corrección de palabras inexistentes.
+* Prueba de hilos realizada
+* Prueba de speech recognition realizada
 
 Cambios a implementar en futuras versiones
 
-* ESTÁ DANDO ERRORES CON LOS ARTÍCULOS, CREO QUE CUANDO LA PRIMERA LETRA ESTÁ EN MAYUSCULAS LOS COGE
+* Indexación de nuevos datos en la base de datos si no están
+* Creacion de un dashboard
+* Prueba de scrapy
 * Comprobar los key_errors, hay palabras que no las está cogiendo el lda
 * Validar el tamaño del vector en doc2vec
 * Crear un corpus con el tamaño máximo de los subtítulos para usar en el doc2vec

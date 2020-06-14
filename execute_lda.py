@@ -19,17 +19,21 @@ from modules.lda.unsupervised_learning_gensim import printColorWordDocument
 #end my modules importation ------------------------------
 """IN THIS CODE WE WILL EXECUTE THE CODE RELATED TO LDA"""
 
-start_topics = 20
-N_TOPICS =25
+start_topics = 37
+N_TOPICS =40
 
 #este parámetro no se puede añadir a mano
 n_printedDocuments =2
-max_clusters= 100
+max_clusters= 200
 
-[files, max_documents] = g.get_NameFiles()
+from modules.sql import dBAdapter
+dbAdapter= dBAdapter.Database()
+dbAdapter.open()
+max_documents = int(dbAdapter.get_maxDocuments()[0][0]);
+dbAdapter.close()
 
 #if we want to change the number of documents to analized we can do it here
-n_documents=500
+n_documents=max_documents-9
 
 #PROGRAM-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -15,6 +15,11 @@ import pickle
 
 nltk.download('stopwords')
 nltk.download('wordnet')
+#this module is used to correct words
+from spellchecker import SpellChecker
+spell = SpellChecker(language='es')
+spell.distance = 1
+
 
 
 from modules.pre import get_data
@@ -33,7 +38,7 @@ from nltk.stem.snowball import SnowballStemmer
 from sklearn.feature_extraction.text import CountVectorizer
 import timeit
 import itertools
-
+from tqdm import tqdm
 
 
 
@@ -41,6 +46,7 @@ import itertools
 #VER COMO PONER ESTO DE FORMA MÁS ELEGANTE
 stopwords   = set(nltk.corpus.stopwords.words('spanish'))
 stopwords.add("unir")
+stopwords.add("ei")
 snowball = SnowballStemmer('spanish')
 punctuation = string.punctuation
 
@@ -53,6 +59,25 @@ logging.basicConfig(filename=name_log_file, level=logging.WARNING,
                     format="%(asctime)s:%(filename)s:%(lineno)d:%(levelname)s:%(message)s")
 
 #-----------------------------------------------------------------------------------------
+def import_es_dict():
+    from nltk import word_tokenize
+    
+    def get_word_dict(word):
+        n=word.find("/")
+        if n != -1:
+            return word[0:n]
+        else:
+            return word
+    f=open("config\\es_ANY.txt","r",encoding='utf-8')
+    file=f.read()
+    dic=word_tokenize(str(file))
+    es_dict = [get_word_dict(word) for word in dic]
+    f.close()
+    
+    return es_dict
+
+#VER DONDE PONER ESTA LINEA DE CÓDIGO MEJOR
+es_dict=import_es_dict()
 
 def compounds_names(text):
     """this function put '-' between compounds names.
@@ -93,19 +118,30 @@ def normalize(text):
         except RuntimeError:
             logging.warning("RuntimeError---- in normalization text (Preparation corpus in lda)  first time generator fails. ")
     
+
     for token in text:
         ## Module constants     
         if token.lower() not in stopwords:
             if token.isupper():
                 word = token
                 yield word
-            if token[0].isupper():
-                word = token
-                yield word
             else:
-                if lemmAndStem(token) and token.replace('.','1').isdigit() != True and token.replace(':','1').isdigit() != True and token.replace('/','1').isdigit() != True:
-                    word=lemmAndStem(token)       
+                if token[0].isupper() and len(token) > 2:
+                    if token in es_dict:
+                        word = token
+                    else:
+                        token=str(spell.correction(token))
+                        token[0].upper()+token[1:]
+                        word = token
                     yield word
+                else:
+                    if lemmAndStem(token) and token.replace('.','1').isdigit() != True and token.replace(':','1').isdigit() != True and token.replace('/','1').isdigit() != True:
+                        if token in es_dict: 
+                            token = token
+                        else: 
+                            token=str(spell.correction(token))
+                        word=lemmAndStem(token)       
+                        yield word
         
         """
         word = token
@@ -118,7 +154,8 @@ def normalize(text):
             word = snowball.stem(word)
             if word not in stopwords and word not in punctuation and len(word)>3:
                 yield word
-        """         
+        """     
+
 def normalize_word(token):
     
     ## Module constants
@@ -135,17 +172,30 @@ def normalize_word(token):
     
     ## Module constants     
     #if all the characters are uppercase then they are not stimmed nor are lemmatized, opposite they will be       
+    
+
     if token.lower() not in stopwords:
         if token.isupper():
             word = token
             return word
-        if token[0].isupper():
-            word = token
-            return word
         else:
-            if lemmAndStem(token) and token.replace('.','1').isdigit() != True and token.replace(':','1').isdigit() != True and token.replace('/','1').isdigit() != True:
-                word=lemmAndStem(token)       
+            if token[0].isupper() and len(token) > 2:
+                if token in es_dict:
+                    word=token
+                else:
+                    token=str(spell.correction(token))
+                    token[0].upper()+token[1:]
+                    word = token
                 return word
+            else:
+                if lemmAndStem(token) and token.replace('.','1').isdigit() != True and token.replace(':','1').isdigit() != True and token.replace('/','1').isdigit() != True:
+                    if token in es_dict:
+                        word = token
+                    else: 
+                        word=str(spell.correction(token))
+                        word= token
+                    word=lemmAndStem(word)       
+                    return word
     
     """
     word = token
@@ -172,6 +222,16 @@ import modules.variables as v
 years = v.YEARS
 channels = v.CHANNELS
 hour_new = v.NEWS
+
+def get_date(subtitle):
+    """"this funtion get the date from a subtitle title with this form:
+            yyyy mm dd
+        """
+    import re
+    from datetime import datetime
+    date = re.search(r'\d{4} \d{2} \d{2}', subtitle)
+    
+    return str(date.group())
 
 def normalize_title_subtitles(subtitle):
     
@@ -250,19 +310,19 @@ def create_d2v_corpus(n_documents):
 
 def create_corpus(n_documents):
     from tqdm import tqdm
+    from modules.sql import dBAdapter
     #tic and toc are used to know how many time the process of extaction has taken
     tic=timeit.default_timer()
     
     dic_subtitles=get_data.get_data(n_documents)
     
     #the rows where the value is empty are removed.
-    print("removing empty dictionary values...")
-    dic_subtitles = {key:value for (key,value) in tqdm(dic_subtitles.items()) if value != ""}
+    #print("removing empty dictionary values...")
+    #dic_subtitles = {key:value for (key,value) in tqdm(dic_subtitles.items()) if value != ""}
     print("removing repited subtitles...")
     dic_subtitles = norm_title_sub(dic_subtitles)
     print("analizing compounds names...")
     dic_subtitles = {key:compounds_names(value) for (key,value) in tqdm(dic_subtitles.items())}
-    
     
     #this line can cut the dictionary of document to make faster
     #dic_subtitles= dict(itertools.islice(dic_subtitles.items(), 0, n_documents))
@@ -299,5 +359,7 @@ def create_corpus(n_documents):
     """
     return generator_normalize, Bow_matrix, vectorizer, vectorizer_first, dic_subtitles
     """
+    #return dic_subtitles
     return generator_normalize, dic_subtitles
+    
 
