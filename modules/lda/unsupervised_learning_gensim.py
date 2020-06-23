@@ -115,20 +115,24 @@ def training_model(n_documents,n_topics,id2word, corpus, generator_normalize):
     
     #tengo bastantes dudas si en el parámetro texts tengo que poner generator_normalize o no
     coherencemodel = CoherenceModel(model=lda_model, corpus=corpus, dictionary=id2word, coherence='u_mass')
-    #coherencemodel = CoherenceModel(model=lda_model, texts=list(generator_normalize), dictionary=id2word, coherence='c_v')
+    coherencemodel_cv = CoherenceModel(model=lda_model, texts=list(generator_normalize), dictionary=id2word, coherence='c_v')
     coherence_values = coherencemodel.get_coherence()
+    coherencemodel_c_uci = CoherenceModel(model=lda_model, texts=list(generator_normalize), dictionary=id2word, coherence='c_uci')
+
     #the model is gonna be saved
     # if the number of subtitles doest change, we can use the same model than the last time
     file_lda_model = 'pickle\\'+str(n_documents)+'\lda_model_'+str(n_topics)+'_'+str(n_documents)+'.sav'
     pickle.dump(lda_model, open(file_lda_model, 'wb'))
     
-    return coherence_values
+    return coherence_values,coherencemodel_cv,coherencemodel_c_uci
 
 
 #PROGRAM......................................................................
 def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):   
     #Tengo que escribir para que sirve cada cosa que hace el gensim
     coherencemodelArray=[]
+    coherencemodelArray_cv=[]
+    coherencemodelArray_c_uci=[]
     
     #import from DDBB dic_subtitles and generator normalize--------------------
     """
@@ -149,9 +153,18 @@ def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):
     dbAdapter.close()
     print("finalizada consulta")
     
+    dic_subtitles2 = dic_subtitles
+    
     generator_normalize = []
-    for l in listado:
-        generator_normalize.append(l[0].split(","))
+    for i in range(len(listado)):
+        try:
+            generator_normalize.append(listado[i][0].split(","))
+        except:
+            dic_subtitles2.pop(list(dic_subtitles.keys())[i])
+            print("generator NonType------>"+str(i))
+    
+    dic_subtitles = dic_subtitles2
+            
     for gn in generator_normalize:
         while True:
             try:
@@ -159,6 +172,7 @@ def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):
             except ValueError:
                 break
     print("Getting body subtitles from the database finished ...")
+    n_documents = len(generator_normalize)
     #--------------------------------------------------------------------------
     
     if not os.path.exists('pickle\\'+str(n_documents)):
@@ -191,6 +205,10 @@ def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):
             lda = pickle.load(f)
             print("The model has been trained previously with..."+str(n_topics)+" n_topics") 
             coherencemodel = CoherenceModel(model=lda, corpus=corpus, dictionary=id2word, coherence='u_mass')
+            coherencemodel_cv = CoherenceModel(model=lda, texts=list(generator_normalize), dictionary=id2word, coherence='c_v')
+            coherencemodel_c_uci = CoherenceModel(model=lda, texts=list(generator_normalize), dictionary=id2word, coherence='c_uci')
+            coherencemodelArray_cv.append(coherencemodel_cv)
+            coherencemodelArray_c_uci.append(coherencemodel_c_uci)
             #CoherenceModel(model=goodLdaModel, texts=texts, dictionary=dictionary, coherence='c_v')
             #coherencemodel = CoherenceModel(model=lda, texts=list(generator_normalize), dictionary=id2word, coherence='c_v')
             coherence_values = coherencemodel.get_coherence()
@@ -202,8 +220,10 @@ def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):
             
             tic_all_processing=timeit.default_timer()
             #function based on : https://www.machinelearningplus.com/nlp/topic-modeling-gensim-python/#13viewthetopicsinldamodel
-            coherence_values=training_model(n_documents,n_topics,id2word,corpus,generator_normalize)
-            coherencemodelArray.append(coherence_values)                
+            [coherence_values,coherencemodel_cv,coherencemodel_c_uci]=training_model(n_documents,n_topics,id2word,corpus,generator_normalize)
+            coherencemodelArray_cv.append(coherencemodel_cv)
+            coherencemodelArray.append(coherence_values)  
+            coherencemodelArray_c_uci.append(coherencemodel_c_uci)              
             toc_all_processing=timeit.default_timer()
             try: 
                 time_lda_fit=str(datetime.timedelta(seconds=int(float(toc_all_processing-tic_all_processing))))
@@ -243,5 +263,5 @@ def LDAmodel( n_topics, n_documents, n_printedDocuments, step=1, start=1):
     #NUMBER OF DOCUMENTs to print results on word
     
     
-    return array_topic_per_document, best_n_topic, dic_subtitles,lda,generator_normalize,corpus,id2word,coherencemodelArray
+    return array_topic_per_document, best_n_topic, dic_subtitles,lda,generator_normalize,corpus,id2word,coherencemodelArray,coherencemodelArray_cv, coherencemodelArray_c_uci
 

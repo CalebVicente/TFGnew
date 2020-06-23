@@ -13,18 +13,70 @@ import numpy as np
 from sklearn.cluster import KMeans
 #start my modules importation ----------------------------
 from modules.pre import get_data as g
+from modules.pre import create_corpus as c
 from modules.classificator import k_means_classificator as kmc
 from modules.lda.unsupervised_learning_gensim import LDAmodel
 from modules.lda.unsupervised_learning_gensim import printColorWordDocument
+import modules.variables as v
+
+channels = v.CHANNELS
 #end my modules importation ------------------------------
+
+#importar csv para visualizar en power bi------------------------------
+def results2csv():
+    #resumen completo de tópicos por subtitulo-------------------------
+    list_channels = []
+    days = []
+    for subtitle in list(dic_subtitles.keys()):
+        list_channels.append(c.get_channel(subtitle)[0])
+        days.append(c.get_date(subtitle))
+    years = []
+    for day in days:
+        years.append(day[:4])
+        
+    dfpbi = topic_dataframe.T
+    
+    dfpbi = topic_dataframe.T.reset_index()
+    
+    dfpbi.insert(len(dfpbi.columns),"channel",list_channels)
+    dfpbi.insert(len(dfpbi.columns),"day",days)
+    dfpbi.insert(len(dfpbi.columns),"year",years)
+    dfpbi.to_csv("data\\df.csv")
+    
+    #media de tópicos por cadena y por año------------------------------
+    channels = v.CHANNELS
+
+    topics = []
+    for i in range(best_n_topic):
+        topics.append('Topic_'+str(i+1))
+    
+    suma = dfpbi[topics].astype(float)
+    suma.insert(suma.shape[1],'channel',dfpbi['channel'])
+    suma.insert(suma.shape[1],'year',dfpbi['year'])
+    suma = suma.groupby(['channel','year']).mean()
+    suma = suma.reset_index()
+    suma.to_csv("data\\df_topics_per_channel.csv")
+    
+    """   
+    topics_per_channel = np.zeros((len(channels),len(topics)))
+        
+    for i in range(len(channels)):
+        for j in range(len(topics)):
+            topics_per_channel[i][j] = dfpbi.loc[dfpbi['channel']==channels[i]][topics[j]].astype(float).sum(axis=0)/len(dfpbi.loc[dfpbi['channel']==channels[i]])
+        
+    dataframe = pd.DataFrame(topics_per_channel.T, dtype="str", index=topics).T
+    dataframe.insert(dataframe.shape[1],'channel',channels)
+    """
+
+#resumen de topicos----------------------------------------------------
 """IN THIS CODE WE WILL EXECUTE THE CODE RELATED TO LDA"""
 
-start_topics = 37
-N_TOPICS =40
+start_topics = 46
+N_TOPICS = 48
 
 #este parámetro no se puede añadir a mano
-n_printedDocuments =2
-max_clusters= 200
+n_printedDocuments =10
+max_clusters= 100
 
 from modules.sql import dBAdapter
 dbAdapter= dBAdapter.Database()
@@ -33,11 +85,23 @@ max_documents = int(dbAdapter.get_maxDocuments()[0][0]);
 dbAdapter.close()
 
 #if we want to change the number of documents to analized we can do it here
-n_documents=max_documents-9
+n_documents=max_documents
 
 #PROGRAM-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[array_topic_per_document, best_n_topic, dic_subtitles,lda,generator_normalize,corpus,id2word,coherenceModelArray]=LDAmodel(n_topics=N_TOPICS,n_documents=n_documents, n_printedDocuments=n_printedDocuments, start=start_topics)
+[array_topic_per_document, best_n_topic, dic_subtitles,lda,generator_normalize,corpus,id2word,coherenceModelArray,coherencemodelArray_cv,coherencemodelArray_c_uci]=LDAmodel(n_topics=N_TOPICS,n_documents=n_documents, n_printedDocuments=n_printedDocuments, start=start_topics)
+
+best_n_topic = 46
+
+#CUIDADO CON ESTO
+n_documents = len(generator_normalize)
+
+file_cv = "pickle\\"+str(n_documents)+"\cv_"+str(n_documents)+'.txt'
+file_c_uci = "pickle\\"+str(n_documents)+"\c_uci_"+str(n_documents)+'.txt'
+import pickle
+pickle.dump(coherencemodelArray_cv, open(file_cv, 'wb'))
+pickle.dump(coherencemodelArray_c_uci, open(file_c_uci, 'wb'))
+
 
 score = kmc.validator_cluster(array_topic_per_document, max_cluster=max_clusters, min_cluster=1)
 
@@ -60,9 +124,13 @@ topic_dataframe = kmc.topic_per_document_pandas(array_topic_per_document, best_n
 
 kmc.printClusterDf(topic_dataframe, n_documents,index_clusters)
 
+topics_resume = lda.show_topics(num_topics=46, num_words=240199, log=False, formatted=True)
+
+#resultados in csv to use them into power bi
+results2csv()
 #ORDENAR UN POCO ESTE CÓDIGO
 #printing into an excel all the topics of the days
-
+"""
 print("printing into excel documents for days")
 df = pd.DataFrame({'A' : [np.nan]})
 days = kmc.list_days(dic_subtitles)
@@ -70,9 +138,9 @@ if not os.path.exists('results\\days\\'+str(n_documents)):
         os.makedirs('results\\days\\'+str(n_documents))
 with pd.ExcelWriter('results\\days\\'+str(n_documents)+'\\day_clusters'+str(n_documents)+'.xlsx') as writer:
         df.to_excel(writer, sheet_name="main") 
-for day in tqdm(days[0:200]):
+for day in tqdm(days[0:20]):
     kmc.printDayDf(day, topic_dataframe, n_documents, index_clusters, dic_subtitles,k_means_optimized, knee)
-
+"""
 
 #PRUEBAS---------------------------------------------------------------------------------------------------
 
@@ -108,3 +176,9 @@ for i in tqdm(range(n_printedDocuments)):
     printColorWordDocument(i,colors,generator_normalize,dic_subtitles,lda_model,corpus,n_documents)
 
 print("el mejor tópicoooooooooooo:"+str(best_n_topic))
+#------------------------------------------------------------------
+
+
+
+
+

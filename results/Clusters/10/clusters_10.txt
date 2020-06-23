@@ -1,20 +1,18 @@
 
 ----------------------------------------N CLUSTER: 0----------------------------------------
-CLUSTER = 0 antena3_2019 09 16_morning_new
 CLUSTER = 0 antena3_2019 09 17_morning_new
 CLUSTER = 0 antena3_2019 09 17_afternoon_new
 
 ----------------------------------------N CLUSTER: 1----------------------------------------
-CLUSTER = 1 antena3_2019 09 14_afternoon_new
-CLUSTER = 1 antena3_2019 09 15_morning_new
+CLUSTER = 1 antena3_2019 09 16_morning_new
+CLUSTER = 1 antena3_2019 09 18_morning_new
 
 ----------------------------------------N CLUSTER: 2----------------------------------------
 CLUSTER = 2 antena3_2019 09 14_morning_new
+CLUSTER = 2 antena3_2019 09 14_afternoon_new
+CLUSTER = 2 antena3_2019 09 15_morning_new
 CLUSTER = 2 antena3_2019 09 15_afternoon_new
-CLUSTER = 2 antena3_2019 09 16_afternoon_new
+CLUSTER = 2 antena3_2019 09 18_afternoon_new
 
 ----------------------------------------N CLUSTER: 3----------------------------------------
-CLUSTER = 3 antena3_2019 09 18_morning_new
-
-----------------------------------------N CLUSTER: 4----------------------------------------
-CLUSTER = 4 antena3_2019 09 18_afternoon_new
+CLUSTER = 3 antena3_2019 09 16_afternoon_new

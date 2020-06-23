@@ -53,7 +53,7 @@ def topic_per_document_pandas(array_topic_per_document, best_n_topic, dic_subtit
     title=[]
     #title.append("clusters")
     for i in range(best_n_topic):
-        title.append('Topic_'+str(i))
+        title.append('Topic_'+str(i+1))
 
 
     dataframe = pd.DataFrame(array_topic_per_document.T, dtype="str", index=title)

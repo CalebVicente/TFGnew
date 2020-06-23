@@ -66,6 +66,8 @@ class Database:
             
             logging.warning("Error reading table prueba at query:"+str(sql))
             
+        
+            
             
     def insert(self, key, value, date):
         "this function insert a row into tv_storage if that row doesnt exist"
@@ -113,6 +115,44 @@ class Database:
         except Error as e:
             print("Error", e)
             logging.warning("Error inserting into table tv_storage body: "+str(name))
+        
+    def update_date(self, name, value):
+        "this function insert a row into tv_storage if that row doesnt exist"
+        from mysql.connector import Error;
+        name = "'"+str(name)+"'"
+        date = "'"+str(value.replace("'",""))+"'"
+            
+        try:
+        
+            sql = "update tv_storage set date = "+date+" WHERE name = "+name+";"
+            self.cursor = self.connection.cursor()
+            self.cursor.execute(sql)
+            #without using commit function is imposible insert but it is not neccesary to do a select
+            self.connection.commit()
+        
+        
+        except Error as e:
+            print("Error", e)
+            logging.warning("Error inserting into table tv_storage date: "+str(name))
+            
+    def update_channel(self, name, value):
+        "this function insert a channel into tv_storage if that row doesnt exist"
+        from mysql.connector import Error;
+        name = "'"+str(name)+"'"
+        body = "'"+str(value)+"'"
+            
+        try:
+        
+            sql = "update tv_storage set channel = "+body+" WHERE name = "+name+";"
+            self.cursor = self.connection.cursor()
+            self.cursor.execute(sql)
+            #without using commit function is imposible insert but it is not neccesary to do a select
+            self.connection.commit()
+        
+        
+        except Error as e:
+            print("Error", e)
+            logging.warning("Error inserting into table tv_storage channel: "+str(name))
                 
     def insert_dataDoc2Vec(self, name, value):
         "this function insert a row into tv_storage if that row doesnt exist"
@@ -132,6 +172,25 @@ class Database:
         except Error as e:
             print("Error", e)
             logging.warning("Error inserting into table tv_storage doc2vec: "+str(name))
+    
+    def update_generator_normalize(self, name, value):
+        "this function insert a row into tv_storage if that row doesnt exist"
+        from mysql.connector import Error;
+        name = "'"+name+"'"
+        value = '"'+str(value)+'"'
+            
+        try:
+        
+            sql = "update tv_storage set normalize_text = "+value+" WHERE name = "+name+";"
+            self.cursor = self.connection.cursor()
+            self.cursor.execute(sql)
+            #without using commit function is imposible insert but it is not neccesary to do a select
+            self.connection.commit()
+        
+        
+        except Error as e:
+            print("Error", e)
+            logging.warning("Error inserting into table tv_storage generator_normalize: "+str(name))
             
     def insert_dataDoc2Vec_prueba(self,value):
         "this function insert a row into tv_storage if that row doesnt exist"
@@ -187,12 +246,12 @@ class Database:
             logging.warning("Error inserting into table tv_storage generator_normalize: "+str(name))
 
             
-    def selectAll(self):
+    def selectDict(self):
         from mysql.connector import Error
         
         try:
         
-            sql = "SELECT name,body FROM tv_storage"
+            sql = "SELECT name,body FROM tv_storage;"
             self.cursor = self.connection.cursor()
             self.cursor.execute(sql)
             
@@ -201,7 +260,39 @@ class Database:
         
         except Error as e:
             
-            logging.warning("Error reading table prueba at query:"+str(sql))
+            logging.warning("Error reading table tv_storage at query:"+str(sql))
+    
+    def selectAllNames(self):
+        from mysql.connector import Error
+        
+        try:
+        
+            sql = "SELECT name FROM tv_storage;"
+            self.cursor = self.connection.cursor()
+            self.cursor.execute(sql)
+            
+            return self.cursor.fetchall()
+            #without using commit function is imposible insert but it is not neccesary to do a select        
+        
+        except Error as e:
+            
+            logging.warning("Error reading table tv_storage at query:"+str(sql))
+    
+    def selectAll(self,limit):
+        from mysql.connector import Error
+        
+        try:
+        
+            sql = "SELECT * FROM tv_storage LIMIT "+str(limit)+";"
+            self.cursor = self.connection.cursor()
+            self.cursor.execute(sql)
+            
+            return self.cursor.fetchall()
+            #without using commit function is imposible insert but it is not neccesary to do a select        
+        
+        except Error as e:
+            
+            logging.warning("Error reading table tv_storage at query:"+str(sql))
             
             
 

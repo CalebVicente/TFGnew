@@ -7,13 +7,16 @@ Este es un archivo temporal.
 
 import sys
 sys.path.insert(0,'..')
-from modules.pre.function_get_data import get_news
 import os
 import logging, logging.handlers
 from datetime import datetime
 import timeit
 import progressbar
 from tqdm import tqdm
+
+#my importations--------------------------------------
+from modules.pre.function_get_data import get_news
+from modules.sql import dBAdapter
 
 name_log_file = datetime.now().strftime('logs\load_subtitles_%d_%m_%Y.log')
     
@@ -40,10 +43,11 @@ def get_data(n_documents):
     
     #PROGRAM:
     #---------------------------------------------------------------------------------------
+    #total name of the files avalable
     files = []
     [files,max_files]= get_NameFiles()
     
-    
+    # name files inserted on the database 
     
     dic_subtitles={}
     list_subtitles=[]

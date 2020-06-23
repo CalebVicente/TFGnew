@@ -209,6 +209,41 @@ def normalize_word(token):
         if word not in stopwords and word not in punctuation and len(word)>3:
             return word
       """      
+def normalize_lsa(text):
+ 
+    def lemmAndStem(word):
+        try:
+            if word not in punctuation:
+                word = word.lower() 
+                word = lemma(word)
+                word = snowball.stem(word)
+                return word
+        except RuntimeError:
+            logging.warning("RuntimeError---- in normalization text (Preparation corpus in lsa)  first time generator fails. ")
+    
+
+    for token in text:
+        ## Module constants     
+        if token.isupper():
+            word = token
+            yield word
+        else:
+            if token[0].isupper() and len(token) > 2:
+                if token in es_dict:
+                    word = token
+                else:
+                    token=str(spell.correction(token))
+                    token[0].upper()+token[1:]
+                    word = token
+                yield word
+            else:
+                if lemmAndStem(token) and token.replace('.','1').isdigit() != True and token.replace(':','1').isdigit() != True and token.replace('/','1').isdigit() != True:
+                    if token in es_dict: 
+                        token = token
+                    else: 
+                        token=str(spell.correction(token))
+                    word=lemmAndStem(token)       
+                    yield word
 
 
 #REMOVE REPITED SUBTITLES:--------------------------------------------------------------------------
@@ -232,6 +267,10 @@ def get_date(subtitle):
     date = re.search(r'\d{4} \d{2} \d{2}', subtitle)
     
     return str(date.group())
+
+def get_channel(subtitle):
+    channel = [channel for channel in channels if subtitle.find(channel)!=-1]
+    return channel
 
 def normalize_title_subtitles(subtitle):
     
@@ -359,6 +398,27 @@ def create_corpus(n_documents):
     """
     return generator_normalize, Bow_matrix, vectorizer, vectorizer_first, dic_subtitles
     """
+    #return dic_subtitles
+    return generator_normalize, dic_subtitles
+
+def create_corpus_by_dict(dic_subtitles):
+    from tqdm import tqdm
+    from modules.sql import dBAdapter
+    
+    print("analizing compounds names...")
+    dic_subtitles = {key:compounds_names(value) for (key,value) in tqdm(dic_subtitles.items())}
+    
+    #this line can cut the dictionary of document to make faster
+    #dic_subtitles= dict(itertools.islice(dic_subtitles.items(), 0, n_documents))
+    
+    #list with all the element tokenized
+    print("\n tokenizing words ...")
+    list_subt_token = [word_tokenize(value) for (key,value) in tqdm(dic_subtitles.items())]
+    print("\n Creation of generator normalize")
+    generator_normalize = [list(normalize(document)) for document in tqdm(list_subt_token)]
+    generator_normalize = list(generator_normalize)
+
+    
     #return dic_subtitles
     return generator_normalize, dic_subtitles
     

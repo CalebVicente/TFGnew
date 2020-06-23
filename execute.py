@@ -75,7 +75,143 @@ for i in range(len(data)):
 dbAdapter.close()
 """
 """
-fjdljf
+
+"""
+
+#------------------------------------------------------
+#IMPORT database to json
+#------------------------------------------------------
+from modules.sql import dBAdapter
+import json
+import collections
+import configparser
+config = configparser.ConfigParser()
+config.read('config\\config.ini')
+
+dbAdapter= dBAdapter.Database()
+dbAdapter.open()
+max_documents = int(dbAdapter.get_maxDocuments()[0][0]);
+tv_storage = dbAdapter.selectAll(max_documents)
+dbAdapter.close()
+
+tv_json = []
+for new in tv_storage:
+    d = collections.OrderedDict()
+    d['id'] = new[0]
+    d['name'] = new[1]
+    d['date'] = new[2]
+    d['state'] = new[3]
+    d['autotimestamp'] = str(new[4])
+    d['body'] = new[5]
+    d['normalize_text'] = new[6]
+    d['data_doc2vec'] = new[7]
+    d['channel'] = new[8]
+    tv_json.append(d)
+
+
+j = json.dumps(tv_json,indent=1, ensure_ascii=False)
+tv_storage_file = config['DATA']['path_tv_storage']
+with open(tv_storage_file, 'w', encoding='utf8') as f:
+    f.write(j)
+    f.close()
+
+
+
+
+"""
+#------------------------------------------------------
+#GET DDBB update channels into database
+#------------------------------------------------------
+from modules.sql import dBAdapter
+dbAdapter= dBAdapter.Database()
+dbAdapter.open()
+dic_subtitles = dict(dbAdapter.selectDict())
+dbAdapter.close()
+print("finalizada consulta")
+
+import modules.variables as v
+channels = v.CHANNELS
+
+channel_column = [(subtitle, channel) for subtitle in list(dic_subtitles.keys()) 
+                    for channel in channels if subtitle.find(channel)!=-1 ]
+
+print("vamos a usar la base de datos")
+from modules.sql import dBAdapter
+dbAdapter= dBAdapter.Database()
+dbAdapter.open()
+from tqdm import tqdm
+for ch in tqdm(channel_column):
+    name=c.normalize_title_subtitles(ch[0])
+    dbAdapter.update_channel(name,ch[1])   
+dbAdapter.close()
+print("finalizada consulta")
+"""
+
+#------------------------------------------------------
+#INDEXACIÓN NUEVOS SUBTÍTULOS
+#------------------------------------------------------
+"""
+from modules.sql import dBAdapter
+dbAdapter = dBAdapter.Database()
+dbAdapter.open()
+names_db=dbAdapter.selectAllNames()
+names_db_list=[ndb[0] for ndb in names_db]
+dbAdapter.close()
+
+from modules.pre import get_data as g
+from modules.pre import create_corpus as c
+[files, max_files]=g.get_NameFiles()
+print("get_data")
+dic_subtitles = g.get_data(max_files)
+total_subtitles = list(dic_subtitles.keys())
+norm_names={}
+for key,value in dic_subtitles.items():
+    norm_names[c.normalize_title_subtitles(str(key))]=value
+
+dic_sub2add = {sub:value for sub,value in norm_names.items() if sub not in names_db_list}
+
+[new_generator_normalize, new_dic_subtitles]=c.create_corpus_by_dict(dic_sub2add)
+
+def removing_none_words(word):
+    if word != None:
+        return word
+gn=[]
+for d in new_generator_normalize:
+    gn.append(','.join(list(filter(removing_none_words,d))))
+
+
+subtitles=list(dic_sub2add.keys())
+dbAdapter= dBAdapter.Database()
+dbAdapter.open()
+for i in range(len(subtitles)):
+    date=c.get_date(subtitles[i])
+    dbAdapter.insert(subtitles[i], dic_sub2add[subtitles[i]], date)
+    dbAdapter.update_generator_normalize(subtitles[i], gn[i])
+dbAdapter.close()
+
+#indexación del canal----------------------------------------------------------
+
+import modules.variables as v
+channels = v.CHANNELS
+
+channel_column = [(subtitle, channel) for subtitle in list(dic_subtitles.keys()) 
+                    for channel in channels if subtitle.find(channel)!=-1 ]
+
+print("vamos a usar la base de datos")
+from modules.sql import dBAdapter
+dbAdapter= dBAdapter.Database()
+dbAdapter.open()
+from tqdm import tqdm
+for ch in tqdm(channel_column):
+    name=c.normalize_title_subtitles(ch[0])
+    dbAdapter.update_channel(name,ch[1])   
+dbAdapter.close()
+print("finalizada consulta")
+
+#HACER EN LA BASE DE DATOS LA SIGUIENTE CONSULTA DESPUES DE EJECUTAR EL CÓDIGO
+#update tv_storage set state = 'inactive'  WHERE body = '';
+    
+"""
 """
 #------------------------------------------------------
 #GET DDBB generator_normalalize from tv_storage
@@ -98,7 +234,6 @@ for gn in generator_normalize:
         except ValueError:
             break
 
-"""
 #------------------------------------------------------
 #GET DDBB DOC2VEC prueba
 #------------------------------------------------------
@@ -115,8 +250,8 @@ for l in listado2:
             l.remove("")
         except ValueError:
             break
-"""
-"""
+
+
 #------------------------------------------------------
 #COMPROBACIÓN FUNCIONAMIENDTO NORMALIZE WORDS
 #------------------------------------------------------
@@ -128,7 +263,7 @@ change = c.normalize_word(word)
 from modules.sql import dBAdapter
 dbAdapter= dBAdapter.Database()
 dbAdapter.open()
-results=dbAdapter.selectAll()
+results=dbAdapter.selectDict()
 dbAdapter.close()
 dresults=dict(results)
 
