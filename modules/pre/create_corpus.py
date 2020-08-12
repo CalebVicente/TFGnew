@@ -213,10 +213,10 @@ def normalize_lsa(text):
  
     def lemmAndStem(word):
         try:
-            if word not in punctuation:
+            if word not in punctuation and len(word)>3:
                 word = word.lower() 
-                word = lemma(word)
-                word = snowball.stem(word)
+                #word = lemma(word)
+                #word = snowball.stem(word)
                 return word
         except RuntimeError:
             logging.warning("RuntimeError---- in normalization text (Preparation corpus in lsa)  first time generator fails. ")
@@ -330,8 +330,6 @@ def create_d2v_corpus(n_documents):
         -data: vocabulary tokenized: REVISAR MEJOR ESTE, PORQUE NO TENGO MUY CLARO EL FORMATO QUE TIENE
     """
     
-    from tqdm import tqdm
-    
     dic_subtitles=get_data.get_data(n_documents)
     
     #the rows where the value is empty are removed.
@@ -344,8 +342,19 @@ def create_d2v_corpus(n_documents):
     
     print("\n tokenizing words ...")
     data = [word_tokenize(value) for (key,value) in tqdm(dic_subtitles.items())]
-    
-    return dic_subtitles, data
+
+    print("fixing words written wrong")
+    data_fixed = []
+    for i in tqdm(range(len(data))):
+        aux = []
+        for word in data[i]:
+            if word in es_dict:
+                aux.append(word)
+            else:
+                aux.append(str(spell.correction(word)))
+        data_fixed.append(aux)
+
+    return dic_subtitles, data_fixed
 
 def create_corpus(n_documents):
     from tqdm import tqdm
@@ -406,7 +415,7 @@ def create_corpus_by_dict(dic_subtitles):
     from modules.sql import dBAdapter
     
     print("analizing compounds names...")
-    dic_subtitles = {key:compounds_names(value) for (key,value) in tqdm(dic_subtitles.items())}
+    #dic_subtitles = {key:compounds_names(value) for (key,value) in tqdm(dic_subtitles.items())}
     
     #this line can cut the dictionary of document to make faster
     #dic_subtitles= dict(itertools.islice(dic_subtitles.items(), 0, n_documents))
@@ -415,7 +424,7 @@ def create_corpus_by_dict(dic_subtitles):
     print("\n tokenizing words ...")
     list_subt_token = [word_tokenize(value) for (key,value) in tqdm(dic_subtitles.items())]
     print("\n Creation of generator normalize")
-    generator_normalize = [list(normalize(document)) for document in tqdm(list_subt_token)]
+    generator_normalize = [list(normalize_lsa(document)) for document in tqdm(list_subt_token)]
     generator_normalize = list(generator_normalize)
 
     

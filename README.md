@@ -4,7 +4,7 @@
 
 --------------------------------------------------------------------------------------------------
 
-VERSION: 23062020
+VERSION: 12082020
 COMMIT: primera versión LDA y TFIDF
 
 
@@ -15,12 +15,12 @@ Cambios principales implementados en esta versión
 * Validación del LSA con coherencia u_mass
 * Mejora de los csv necesarios para la visualización del dashboard
 * Mejora de las 
-
-Cambios a implementar en futuras versiones
-
 * Indexación de nuevos datos en la base de datos del doc2vec
 * Comprobar los key_errors, hay palabras que no las está cogiendo el lda 
 * Poner todas las rutas del programa en el archivo config
-* Ver como clasificar con la similitud que nos proporciona doc2vec y no k_means
+
+
+Cambios a implementar en futuras versiones
+
 * Hacer una investigación de summarization con lsa y otras técnicas
 

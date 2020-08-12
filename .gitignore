@@ -4,3 +4,5 @@
 /pruebas/audio/
 /pruebas/audio_chunks/
 /data/
+/tfv_metadata.tsv
+/tfv_tensor.tsv

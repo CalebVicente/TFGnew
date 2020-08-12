@@ -1,0 +1,10 @@
+05_08_2020-------------------------------------------------
+Numero de documentos disponibles: 9122
+Numero de documentos usados: 300
+Numero de telediarios: 300
+Numero de validaciones usadas en el LDA: 12
+Número optimo de topicos LDA: 11
+Número de validaciones de K-means: 200
+Número optimo de clusters en k-means: 14
+-------------------------------------------------
+Tamaño máximo del vocabulario: 35487

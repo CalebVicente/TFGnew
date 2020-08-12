@@ -9,13 +9,36 @@ Created on Wed May 27 17:38:18 2020
 
 from modules.doc2vec import doc2vec as d2v
 from modules.classificator import k_means_doc2vec as k
+from modules.sql import dBAdapter 
 import matplotlib.pyplot as plt
 import timeit
+import numpy as np
+import pickle
 
-max_clusters=300
+database = 'tfg_project'
+collection = 'tv_storage'
+dbAdapter = dBAdapter.Database(database, collection)
+dbAdapter.open()
+max_documents = dbAdapter.get_maxDocuments()
+dbAdapter.close()
 
-[list_vec_doc2vec, arr_vec_doc2vec]=d2v.doc2vec_module(n_documents = 5000, max_clusters = max_clusters)
+max_clusters=20
+n_documents = 200
 
+[list_vec_doc2vec, arr_vec_doc2vec, train_data, model]=d2v.doc2vec_module(database, collection, n_documents = n_documents, vector_size = 50, max_clusters = max_clusters)
+
+#Para saber las palabras más parecidas con el modelo DM
+model.wv.most_similar('camión')
+
+"""IMPORTANTE"""
+#Poner el modelo de palabras en el Embedding Projector
+model.wv.save_word2vec_format('doc2vec_model')
+#ejecutar el siguiente comando en cmd donde se encuentre la ruta de model_name
+#python -m gensim.scripts.word2vec2tensor --input doc2vec_model --output tf_name
+#ir a la página de https://projector.tensorflow.org/
+#salen demasiadas palabras, quitar unas cuantas
+
+"""
 #-----------------------------------------------------------------------------------------------------
 #COMPARATION BETWEEN K_MEANS AND PCA KMEANS
 #-----------------------------------------------------------------------------------------------------
@@ -29,7 +52,7 @@ tic=timeit.default_timer()
 [components,knee_pca]=d2v.doc2vec_kmeans_pca(arr_vec_doc2vec, max_clusters)
 toc=timeit.default_timer()
 print("Time using PCA k_means: "+str(toc-tic))
-
+"""
 #START PCA: ------------------------------------------------------------------------------------------
 
 

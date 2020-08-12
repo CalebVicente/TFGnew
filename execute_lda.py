@@ -18,6 +18,7 @@ from modules.classificator import k_means_classificator as kmc
 from modules.lda.unsupervised_learning_gensim import LDAmodel
 from modules.lda.unsupervised_learning_gensim import printColorWordDocument
 import modules.variables as v
+from itertools import chain
 
 channels = v.CHANNELS
 #end my modules importation ------------------------------
@@ -71,17 +72,21 @@ def results2csv():
 #resumen de topicos----------------------------------------------------
 """IN THIS CODE WE WILL EXECUTE THE CODE RELATED TO LDA"""
 
-start_topics = 46
-N_TOPICS = 48
+start_topics = 1
+N_TOPICS = 2
+step = 2
 
 #este parámetro no se puede añadir a mano
-n_printedDocuments =10
-max_clusters= 100
+n_printedDocuments =20
+max_clusters= 200
+
 
 from modules.sql import dBAdapter
-dbAdapter= dBAdapter.Database()
+name_database = 'tfg_project'
+name_collection = 'tv_storage'
+dbAdapter= dBAdapter.Database(name_database, name_collection)
 dbAdapter.open()
-max_documents = int(dbAdapter.get_maxDocuments()[0][0]);
+max_documents = dbAdapter.get_maxDocuments();
 dbAdapter.close()
 
 #if we want to change the number of documents to analized we can do it here
@@ -89,19 +94,12 @@ n_documents=max_documents
 
 #PROGRAM-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-[array_topic_per_document, best_n_topic, dic_subtitles,lda,generator_normalize,corpus,id2word,coherenceModelArray,coherencemodelArray_cv,coherencemodelArray_c_uci]=LDAmodel(n_topics=N_TOPICS,n_documents=n_documents, n_printedDocuments=n_printedDocuments, start=start_topics)
+[array_topic_per_document, best_n_topic, dic_subtitles,lda,generator_normalize,corpus,id2word,coherencemodelArray]=LDAmodel(N_TOPICS,n_documents, n_printedDocuments,name_database,name_collection, step,start=start_topics)
 
-best_n_topic = 46
+best_n_topic = 11
 
 #CUIDADO CON ESTO
 n_documents = len(generator_normalize)
-
-file_cv = "pickle\\"+str(n_documents)+"\cv_"+str(n_documents)+'.txt'
-file_c_uci = "pickle\\"+str(n_documents)+"\c_uci_"+str(n_documents)+'.txt'
-import pickle
-pickle.dump(coherencemodelArray_cv, open(file_cv, 'wb'))
-pickle.dump(coherencemodelArray_c_uci, open(file_c_uci, 'wb'))
-
 
 score = kmc.validator_cluster(array_topic_per_document, max_cluster=max_clusters, min_cluster=1)
 
@@ -124,12 +122,14 @@ topic_dataframe = kmc.topic_per_document_pandas(array_topic_per_document, best_n
 
 kmc.printClusterDf(topic_dataframe, n_documents,index_clusters)
 
-topics_resume = lda.show_topics(num_topics=46, num_words=240199, log=False, formatted=True)
+topics_resume = lda.show_topics(num_topics=28, num_words=int(len(list(dict(id2word).keys()))), log=False, formatted=True)
 
 #resultados in csv to use them into power bi
 results2csv()
 #ORDENAR UN POCO ESTE CÓDIGO
 #printing into an excel all the topics of the days
+
+
 """
 print("printing into excel documents for days")
 df = pd.DataFrame({'A' : [np.nan]})
@@ -146,6 +146,8 @@ for day in tqdm(days[0:20]):
 
 
 #IMPRIMIR DOCUMENTOS DE WORD--------------------------------------------------------------
+#MEDIR LA PERPLEJIDAD DEL MODELO:
+#lda_model.log_perplexity(corpus)
 
 print("ha llegado a entrenar el modelo")
 lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,

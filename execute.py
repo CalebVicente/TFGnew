@@ -4,6 +4,40 @@ Created on Mon Jun  1 08:04:32 2020
 
 @author: cvicentm
 """
+
+
+from modules import sql
+
+database = 'tfg_project'
+collection = 'tv_storage'
+dbAdapter = sql.dBAdapter.Database(database, collection)
+dbAdapter.open()
+max_documents = dbAdapter.get_maxDocuments()
+result_mongo = list(dbAdapter.selectAll(10))
+dbAdapter.close()
+
+import mysql.connector
+connection = mysql.connector.connect(host= '192.168.1.39',
+                                         database= 'news_storage',
+                                         user='root',
+                                         password='tfg_project')
+#Importar a la base de datos de subtitles
+for item in result_mongo:
+    name = item['name']
+    channel = item['channel']
+    date = item['day']
+    state = item['state']
+    sql = "INSERT INTO subtitles (name,channel,datee,state) VALUES ("+name+", "+channel+", "+date+" ,"+state+");"
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    connection.commit()
+    
+
+
+
+
+
+
 """
 from nltk import word_tokenize
 def get_word_dict(word):
@@ -77,7 +111,7 @@ dbAdapter.close()
 """
 
 """
-
+"""
 #------------------------------------------------------
 #IMPORT database to json
 #------------------------------------------------------
@@ -116,7 +150,7 @@ with open(tv_storage_file, 'w', encoding='utf8') as f:
     f.close()
 
 
-
+"""
 
 """
 #------------------------------------------------------

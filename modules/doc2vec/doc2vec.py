@@ -24,10 +24,12 @@ from tqdm import tqdm
 import sys
 sys.path.insert(0,'..')
 """
+from modules.sql.dBAdapter import Database
 from modules.pre import create_corpus as c
 from modules.classificator import k_means_doc2vec as km_d2v
 from modules.pre import get_data as g
 from modules.sql import dBAdapter
+
 #end my importations--------------------------
 config = configparser.ConfigParser()
 config.read('config\\config.ini')
@@ -35,7 +37,7 @@ config.read('config\\config.ini')
 
 #start config variables---------------------------------------------------------------------
 
-def doc2vec_module(n_documents = 500, max_clusters = 200):
+def doc2vec_module(database, collection, n_documents = 300, vector_size = 50, max_clusters = 200):
     
     
     
@@ -51,19 +53,20 @@ def doc2vec_module(n_documents = 500, max_clusters = 200):
     #import from DDBB dic_subtitles and data doc2vec --------------------------
     print("Getting body subtitles from the database started ...")
     data=[]
-    dbAdapter= dBAdapter.Database()
+    dbAdapter = dBAdapter.Database( database, collection)
     dbAdapter.open()
-    dic_subtitles = dict(dbAdapter.selectDic_subtitles_limit(n_documents))
+    dic_subtitles = dbAdapter.selectDic_subtitles_limit(n_documents)
     subtitles=list(dic_subtitles.keys())
     list_s=dbAdapter.select_dataDoc2Vec(n_documents)
     print("Getting body subtitles from the database finished ...")
     data=[]
     for l in list_s:
-        data.append(l[0].split(","))
+        data.append(l.split(","))
     for d in data:
         while True:
             try:
                 d.remove("")
+                d.remove(" ")
             except ValueError:
                 break
     
@@ -78,7 +81,7 @@ def doc2vec_module(n_documents = 500, max_clusters = 200):
     train_data = list(create_tagged_document(data))
     
     print("starting with doc2vec....")
-    model = gensim.models.doc2vec.Doc2Vec(vector_size=50, min_count=2, epochs=40)
+    model = gensim.models.doc2vec.Doc2Vec(vector_size=vector_size, min_count=2, epochs=40)
     
     # Build the Volabulary
     model.build_vocab(train_data)
@@ -91,7 +94,7 @@ def doc2vec_module(n_documents = 500, max_clusters = 200):
     arr_vec_doc2vec = np.stack( list_vec_doc2vec, axis=0 )
     
     
-    return list_vec_doc2vec, arr_vec_doc2vec
+    return list_vec_doc2vec, arr_vec_doc2vec, train_data, model
 
 def doc2vec_kmeans_similarity(arr_vec_doc2vec, max_clusters):
     #K_MEANS SIMILARITY: -------------------------------------------------------------------------
